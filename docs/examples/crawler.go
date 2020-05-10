@@ -238,6 +238,7 @@ func findClosestPeers(peerID string) {
 	uri := "http://127.0.0.1:5001/api/v0/dht/query?arg="+peerID
 
 	requestString := strings.NewReader("")
+
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
