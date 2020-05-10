@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <!-- TODO: seed these - maybe like the starter ex or the webui? -->
+  <link rel="stylesheet" href="/ipfs/Qme2SZFZhhgzT4v3d2R87c8KwaozjyqqUrXPzzA85QbGnj/style.css"/>
+  <!-- Icon art is https://fileicons.org/ -->
+  <link rel="stylesheet" href="/ipfs/Qme2SZFZhhgzT4v3d2R87c8KwaozjyqqUrXPzzA85QbGnj/icons.css">
+  <title>{{ .Path }}</title>
+</head>
+<body>
+  <div id="header" class="row">
+    <div class="" style="float:left; padding: 0 15px; width: 160px;">
+      <div id="logo" class="ipfs-logo">&nbsp;</div>
+    </div>
+    <div id="header-menu">
+      <div class="header-menu-item"><a href="https://ipfs.io" target="_blank" rel="noopener noreferrer">About IPFS</a></div>
+      <div class="header-menu-item"><a href="https://ipfs.io#install" target="_blank" rel="noopener noreferrer">Install IPFS</a></div>
+      <div class="header-menu-item" id="bug-report">
+        <a href="https://github.com/ipfs/dir-index-html/issues/" target="_blank" rel="noopener noreferrer">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18.4 21"><circle cx="7.5" cy="4.8" r="1"/><circle cx="11.1" cy="4.8" r="1"/><path d="M12.7 8.4c-0.5-1.5-1.9-2.5-3.5-2.5 -1.6 0-3 1-3.5 2.5H12.7z"/><path d="M8.5 9.7H5c-0.5 0.8-0.7 1.7-0.7 2.7 0 2.6 1.8 4.8 4.2 5.2V9.7z"/><path d="M13.4 9.7H9.9v7.9c2.4-0.4 4.2-2.5 4.2-5.2C14.1 11.4 13.9 10.5 13.4 9.7z"/><circle cx="15.7" cy="12.9" r="1"/><circle cx="15.1" cy="15.4" r="1"/><circle cx="15.3" cy="10.4" r="1"/><circle cx="2.7" cy="12.9" r="1"/><circle cx="3.3" cy="15.4" r="1"/><circle cx="3.1" cy="10.4" r="1"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <br/>
+  <div class="col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <strong>Index of {{ .Path }}</strong>
+        {{ if .Hash }}
+        <div class="ipfs-hash">
+          {{ .Hash }}
+        </div>
+        {{ end }}
+      </div>
+      <table class="table table-striped">
+        <tr>
+          <td class="narrow">
+            <div class="ipfs-icon ipfs-_blank">&nbsp;</div>
+          </td>
+          <td class="padding">
+            <a href="{{.BackLink}}">..</a>
+          </td>
+          <td></td>
+        </tr>
+        {{ range .Listing }}
+        <tr>
+          <td>
+            <div class="ipfs-icon {{iconFromExt .Name}}">&nbsp;</div>
+          </td>
+          <td>
+            <a href="{{ .Path }}">{{ .Name }}</a>
+          </td>
+          <td>{{ .Size }}</td>
+        </tr>
+      {{ end }}
+      </table>
+    </div>
+  </div>
+</body>
+</html>

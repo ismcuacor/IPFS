@@ -165,6 +165,7 @@ func checkSwarmAPI (ctx context.Context, ipfs icore.CoreAPI){
 
 	churn := checkChurn(peersAPI)/len(peersAPI)
 	fmt.Println("Nodes in the swarm", len(peersAPI))
+	fmt.Println("New peers", newPeers)
 	fmt.Println("Churn till now: %v", churn)
 
 	resetMap(peersAPI)
@@ -218,7 +219,8 @@ func checkSwarmHTTP () {
 	churn := checkChurn(peersHTTP)/len(peersHTTP)
 
 	fmt.Println("Nodes in the swarm", len(peersHTTP))
-	fmt.Println("Churn till now: %v", churn)
+	fmt.Println("New peers", newPeers)
+	fmt.Println("Churn till now: ", churn)
 
 	resetMap(peersHTTP)
 }
