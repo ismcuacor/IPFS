@@ -70,7 +70,7 @@ func checkSwarmHTTP () {
 	fmt.Println("Nodes in the swarm", peersList.Len())
 }
 
-func findClosestPeers(peerID string) {
+func findClosestPeersHTTP(peerID string) {
 	uri := "http://127.0.0.1:5001/api/v0/dht/query?arg="+peerID
 	file := "filename.txt"
 
