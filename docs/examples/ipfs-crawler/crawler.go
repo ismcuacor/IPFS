@@ -102,14 +102,15 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 }
 
 func main() {
-	//checkSwarmAPI()
-	checkSwarmHTTP()
+	checkSwarmAPI()
+	//checkSwarmHTTP()
 
 	for (true) {
+		fmt.Println("Iteration ")
 		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
-				//findClosestPeersAPI(peer.Value.(string))
-				findClosestPeersHTTP(peer.Value.(string))
+				findClosestPeersAPI(peer.Value.(string))
+				//findClosestPeersHTTP(peer.Value.(string))
 			}
 		}
 	//	time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
@@ -122,8 +123,6 @@ func checkSwarmAPI (){
 	ipfs, err := spawn(ctx)
 	logError(err, "retrieving swarm")
 
-	checkSwarmHTTP()
-
 	peersSwarmAPI, err := ipfs.Swarm().Peers(ctx)
 	logError(err, "retrieving swarm")
 
@@ -134,7 +133,7 @@ func checkSwarmAPI (){
 	fmt.Println("Nodes in the swarm", peersList.Len())
 }
 
-func findClosestPeersAPI(peer string, ctx context.Context, ipfs icore.CoreAPI) {
+func findClosestPeersAPI(peer string) {
 	dht := myNode.DHT.WAN
 	peers, err := dht.GetClosestPeers(ctx, peer)
 	logError(err, "retrieving closest peers")
@@ -148,6 +147,7 @@ func findClosestPeersAPI(peer string, ctx context.Context, ipfs icore.CoreAPI) {
 		if err != nil {
                         churn++
                 }
+		//TODO create here a function to delete unnecesary connections, looking at connectInfo
 
                 peersMap[nextPeer.Pretty()] = 1
         }
