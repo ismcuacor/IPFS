@@ -9,7 +9,10 @@ import (
 	"strings"
 	"net/http"
 	"encoding/json"
-	"bytes"
+	"os"
+	//"io"
+	"log"
+	"bufio"
 
 	config "github.com/ipfs/go-ipfs-config"
 	libp2p "github.com/ipfs/go-ipfs/core/node/libp2p"
@@ -46,7 +49,7 @@ var churn = 0
 
 // All peers which have been discovered so far
 var peersAPI map[string]int
-var peersHTTP map[string]int
+var peersList map[string]int
 
 /// ------ Setting up the IPFS Repo
 func setupPlugins(externalPluginsPath string) error {
@@ -133,7 +136,7 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 
 func main() {
 	peersAPI = make(map[string]int)
-	peersHTTP = make(map[string]int)
+	peersList = make(map[string]int)
 
 	//fmt.Println("-- Getting an IPFS node running -- ")
 
@@ -154,8 +157,11 @@ func main() {
 	//checkSwarmAPI(ctx, ipfs)
 
 	//for (true) {
-		for peer, _ := range peersHTTP {
-			findClosestPeers(peer)
+		for peer, state := range peersList {
+			if state < 2 {
+				findClosestPeers(peer)
+				peersList[peer] = 2
+			}
 		}
 	//	time.Sleep(10 * time.Second)
 	//}
@@ -178,8 +184,6 @@ func checkSwarmAPI (ctx context.Context, ipfs icore.CoreAPI){
 
 	fmt.Println("Nodes in the swarm", len(peersAPI))
 	fmt.Println("New peers", newPeers)
-
-	resetMap(peersAPI)
 }
 
 func checkSwarmHTTP () {
@@ -218,27 +222,25 @@ func checkSwarmHTTP () {
 
 	newPeers := 0
 	for _,peer := range peersSwarm.Peers {
-		_, hit := peersHTTP[peer.Peer]
+		_, hit := peersList[peer.Peer]
 		if !hit {
 			newPeers ++
 		}
-		peersHTTP[peer.Peer] = 1
+		peersList[peer.Peer] = 1
 	}
 
 	defer resp.Body.Close()
 
 
-	fmt.Println("Nodes in the swarm", len(peersHTTP))
+	fmt.Println("Nodes in the swarm", len(peersList))
 	fmt.Println("New peers", newPeers)
-
-	resetMap(peersHTTP)
 }
 
 func findClosestPeers(peerID string) {
 	uri := "http://127.0.0.1:5001/api/v0/dht/query?arg="+peerID
+	file := "filename.txt"
 
 	requestString := strings.NewReader("")
-
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -255,33 +257,72 @@ func findClosestPeers(peerID string) {
 	    fmt.Println(err.Error())
 	}
 
-	var closePeers Query
-	responseBytes, err := ioutil.ReadAll(resp.Body)
-
+	out, err := os.Create(file)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
-	err = json.Unmarshal(responseBytes, &closePeers)
-
-	fmt.Println(closePeers)
-	if closePeers.Extra != "" {
-		churn++
-	}
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	defer out.Close()
+	io.Copy(out, resp.Body)
 
 	defer resp.Body.Close()
 
-	fmt.Println("Nodes in the list", len(peersHTTP))
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	closePeers := make(map[int]Query)
+	parseFileToResponse(file, closePeers)
+
+	err := os.Remove(file)
+
+	if err != nil {
+		log.Fatalf("failed to open file: %s", err)
+	}
+
+	newNodes := 0
+	//When there's Extra, is to say that no address was reachable
+	for _, nextPeer := range closePeers {
+		if nextPeer.Extra != "" && peersList[nextPeer.ID] < 1 {
+			churn++
+		}
+
+		_, hit := peersList[nextPeer.ID]
+		if !hit {
+			newNodes++
+			peersList[nextPeer.ID] = 1
+		}
+	}
+
+	fmt.Println("Nodes in the list", len(peersList))
+	fmt.Println("New Nodes", newNodes)
 	fmt.Println("Churn until now ", churn)
 }
 
-func resetMap (peers map[string]int) {
-	for id,_ := range peers {
-		peers[id] = 0
+func parseFileToResponse(file string, closePeers map[int]Query) {
+	readFile, err := os.Open(file)
+
+	if err != nil {
+		log.Fatalf("failed to open file: %s", err)
 	}
 
+	fileScanner := bufio.NewScanner(readFile)
+	fileScanner.Split(bufio.ScanLines)
+	var fileTextLines []string
+
+	for fileScanner.Scan() {
+		fileTextLines = append(fileTextLines, fileScanner.Text())
+	}
+
+	readFile.Close()
+
+	i:=0
+	var nextPeer Query
+	for _, eachline := range fileTextLines {
+		err = json.Unmarshal([]byte(eachline), &nextPeer)
+		if err != nil {
+			log.Fatalf("failed to open file: %s", err)
+		}
+		closePeers[i] = nextPeer
+		i++
+	}
 }
