@@ -29,6 +29,7 @@ var peersMap = make(map[string]int)
 var myNode *core.IpfsNode
 var ctx context.Context
 var ipfs icore.CoreAPI
+var wg sync.WaitGroup
 
 // To prettify errors and help debbugging & reading
 func logError(err error, str string) {
@@ -107,7 +108,6 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 //
 
 func connectToPeers(peers []string) error {
-	var wg sync.WaitGroup
 	peerInfos := make(map[peer.ID]*peerstore.PeerInfo, len(peers))
 	for _, addrStr := range peers {
 		addr, err := ma.NewMultiaddr(addrStr)
@@ -130,7 +130,15 @@ func connectToPeers(peers []string) error {
 	for _, peerInfo := range peerInfos {
 		go func(peerInfo *peerstore.PeerInfo) {
 			defer wg.Done()
+			//To check for churn, we need to try and connect to the peer in any address
 			err := ipfs.Swarm().Connect(ctx, *peerInfo)
+			//err = ipfs.Swarm().Connect(ctx, peerInfo)
+
+			if err != nil {
+			        churn++
+			}
+			//TODO create here a function to delete unnecesary connections, looking at connectInfo
+
 			if err != nil {
 				log.Printf("failed to connect to %s: %s", peerInfo.ID, err)
 			}
@@ -167,8 +175,8 @@ func main() {
 	//checkSwarmHTTP()
 
 	for (true) {
-		fmt.Println("Iteration ")
 		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
+			fmt.Println("checking peer: " + peer)
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
 				findClosestPeersAPI(peer.Value.(string))
 				//findClosestPeersHTTP(peer.Value.(string))
@@ -202,19 +210,16 @@ func findClosestPeersAPI(peer string) {
 	peers, err := dht.GetClosestPeers(ctx, peer)
 	logError(err, "retrieving closest peers")
 
+	var connectGroup []string
         for nextPeer := range peers {
-		peerInfo, err := dht.FindPeer(ctx, nextPeer)
-		logError(err, "retrieving swarm")
-                //To check for churn, we need to try and connect to the peer in any address
-		err = ipfs.Swarm().Connect(ctx, peerInfo)
-
-		if err != nil {
-                        churn++
-                }
-		//TODO create here a function to delete unnecesary connections, looking at connectInfo
-
+		//peerInfo, err := dht.FindPeer(ctx, nextPeer)
+		//logError(err, "retrieving swarm")
+		//TODO manage concurrency here
                 peersMap[nextPeer.Pretty()] = 1
+		connectGroup = append(connectGroup, nextPeer.Pretty())
         }
+
+	go connectToPeers(connectGroup)
 
         fmt.Println("Nodes in the map", len(peersMap))
         fmt.Println("Churn until now ", churn/len(peersMap))
