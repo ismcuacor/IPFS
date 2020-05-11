@@ -17,5 +17,7 @@ This code uses both the HTTP REST and Core API. The queries made to the APIs are
        \-- A similar crawler (with a different implementation) could be obtained by using the DhtAPI.getPeers() method in the go-Core API, which returns the peers hosting a specific file. 
        \-- The dht/get method used from the HTTP API returns a set of JSONs (one per neightbor). This message is too big for hosting it in the memory, so it is backed-up in a temporal file for processing. 
 
+Also, it is a interesting work seeing how the HTTP and CoreAPI behave when working on the same Swarm
+
 ## Running the application 
 For the app to function, the ipfs deamon shall be running with "ipfs daemon &". Then, the application is run with "go run . ". It shows two metrics, each time that it processes a Node: lenght of the Hash Table so far (discovered nodes) and churn (which of these nodes are disconnected from the network.
