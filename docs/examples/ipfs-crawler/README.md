@@ -25,7 +25,7 @@ For the app to function, the ipfs deamon shall be running with "ipfs daemon &". 
 ## Discussion
 It is obviously not the goal of IPFS to have a tracker of nodes in the system, but it is still possible (given enough resources) to build this list by traversing the tree of nodes. More information (not only IDs is equally accesible to the programmer (such as the addresses pointing to a node, and can be retrieved. There's also an ongoing discussion inside the community to abandon the DHTAPI object in favour of routing ones, due to the low performance of this object.
 
-Finally, the perfomance of the algorithm is linear in space and time. This performance (in time) is the best that can be achieved, since all nodes need to be visited at least one time.
+Finally, the perfomance of the algorithm is linear in space and time. This performance (in time) is the best that can be achieved, since all nodes need to be visited at least one time. The algorithm could be improved by using hyper threading to manage distant regions, and channels to ensure synchronization between them.
 
 ## More information
  <p>- IPFS HTTP API: https://docs.ipfs.io/reference/api/http/</p>
