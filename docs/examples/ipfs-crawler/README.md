@@ -4,7 +4,7 @@ The goal of this application is to use the IPFS API to build a crawler in the IP
 ## Structure
 The idea of the crawler is to go over the DHT annotating each neighbor to a certain node. This process is repeated in a Breadth Search algorithm to retrieve the list of all nodes in the network. To avoid cycles, a list of visited nodes is kept, using a hashmap to improve the accessing time for it.
 
-
+![Breadth-First traverse](./figure.jpg)
 
 Similarly, a crawler could be implemented by parsing all the nodes associated to a certain content ID. However, for this approach to be representative, the node running the crawler should have access to a significant part of the content hashkeys (or else try to brute force all possible ones), which is not the goal of the application.
 
