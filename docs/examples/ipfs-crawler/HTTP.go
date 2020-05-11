@@ -12,8 +12,6 @@ import (
 	"bufio"
 )
 
-var churn = 0
-
 //JSON response for REST query
 type PeersSwarm struct {
 	Peers []struct {

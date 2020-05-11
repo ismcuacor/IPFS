@@ -30,6 +30,8 @@ var myNode *core.IpfsNode
 var ctx context.Context
 var ipfs icore.CoreAPI
 var wg sync.WaitGroup
+var churn = 0
+var max = 200
 
 // To prettify errors and help debbugging & reading
 func logError(err error, str string) {
@@ -183,6 +185,9 @@ func main() {
 			}
 		}
 	//	time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
+		if peersList.Len() == 0 || len(peersMap) > max {
+			break
+		}
 	}
 }
 
