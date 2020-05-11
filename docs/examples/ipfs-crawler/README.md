@@ -10,7 +10,7 @@ Similarly, a crawler could be implemented by parsing all the nodes associated to
 
 ## Implementation 
 This code uses both the HTTP REST and Core API. The queries made to the APIs are:
- \- Connect(), to create a node and connect it to the network
+ <p>- Connect(), to create a node and connect it to the network</p>
  \- Swarm(), to get the swarm of nodes that are connected to the new node
  \- Dht(), to retrieve the DHT table. There are a few considerations here:
        \-- For the DHT table, the HTTP API (also JS core API and CLI, but those are not implemented here) have access to the neightbors (closest peers) to a node. In the CoreAPI there are 2 objects with access to this table: DhtAPI and routing/DHT. The first one, however, does not have a way to find neighbors 
