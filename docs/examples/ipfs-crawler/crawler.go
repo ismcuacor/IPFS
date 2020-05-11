@@ -106,7 +106,7 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 
 //
 
-func connectToPeers(ctx context.Context, ipfs icore.CoreAPI, peers []string) error {
+func connectToPeers(peers []string) error {
 	var wg sync.WaitGroup
 	peerInfos := make(map[peer.ID]*peerstore.PeerInfo, len(peers))
 	for _, addrStr := range peers {
@@ -141,6 +141,8 @@ func connectToPeers(ctx context.Context, ipfs icore.CoreAPI, peers []string) err
 }
 
 func main() {
+	startIPFS()
+
 	bootstrapNodes := []string{
 		// IPFS Bootstrapper nodes.
 		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
@@ -158,9 +160,9 @@ func main() {
 		// "/ip4/127.0.0.1/tcp/4010/p2p/QmZp2fhDLxjYue2RiUvLwT9MWdnbDxam32qYFnGmxZDh5L",
 	}
 	//To make sure that the swarm is well connected
-	
-	go connectToPeers(ctx, ipfs, bootstrapNodes)
-	
+
+	go connectToPeers(bootstrapNodes)
+
 	checkSwarmAPI()
 	//checkSwarmHTTP()
 
@@ -176,12 +178,15 @@ func main() {
 	}
 }
 
-func checkSwarmAPI (){
+func startIPFS() {
+	var err error
 	ctx = context.Background()
 
-	ipfs, err := spawn(ctx)
+	ipfs, err = spawn(ctx)
 	logError(err, "retrieving swarm")
+}
 
+func checkSwarmAPI (){
 	peersSwarmAPI, err := ipfs.Swarm().Peers(ctx)
 	logError(err, "retrieving swarm")
 
