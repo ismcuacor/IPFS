@@ -23,7 +23,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-// All peers which have been discovered so far
+// Global variables
 var peersList = list.New()
 var peersMap = make(map[string]int)
 var myNode *core.IpfsNode
@@ -33,7 +33,7 @@ var wg sync.WaitGroup
 var churn = 0
 var max = 200
 
-// To prettify errors and help debbugging & reading
+// Func to prettify errors and help debbugging & reading
 func logError(err error, str string) {
 	if err != nil {
 		log.Printf("Failed at %s with error %s", str, err)
@@ -107,8 +107,7 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 	return createNode(ctx, repoPath)
 }
 
-//
-
+// Func to connect
 func connectToPeers(peers []string) error {
 	peerInfos := make(map[peer.ID]*peerstore.PeerInfo, len(peers))
 	for _, addrStr := range peers {
@@ -134,44 +133,21 @@ func connectToPeers(peers []string) error {
 			defer wg.Done()
 			//To check for churn, we need to try and connect to the peer in any address
 			err := ipfs.Swarm().Connect(ctx, *peerInfo)
-			//err = ipfs.Swarm().Connect(ctx, peerInfo)
 
 			if err != nil {
-			        churn++
-			}
-			//TODO create here a function to delete unnecesary connections, looking at connectInfo
-
-			if err != nil {
+			        churn = churn + 1
 				log.Printf("failed to connect to %s: %s", peerInfo.ID, err)
 			}
+			//TODO create here a function to delete unnecesary connections, looking at connectInfo
 		}(peerInfo)
 	}
 	wg.Wait()
 	return nil
 }
 
+// Main
 func main() {
 	startIPFS()
-
-	bootstrapNodes := []string{
-		// IPFS Bootstrapper nodes.
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-
-		// IPFS Cluster Pinning nodes
-		"/ip4/138.201.67.219/tcp/4001/p2p/QmUd6zHcbkbcs7SMxwLs48qZVX3vpcM8errYS7xEczwRMA",
-		"/ip4/138.201.67.220/tcp/4001/p2p/QmNSYxZAiJHeLdkBg38roksAR9So7Y5eojks1yjEcUtZ7i",
-		"/ip4/138.201.68.74/tcp/4001/p2p/QmdnXwLrC8p1ueiq2Qya8joNvk3TVVDAut7PrikmZwubtR",
-		"/ip4/94.130.135.167/tcp/4001/p2p/QmUEMvxS2e7iDrereVYc5SWPauXPyNwxcy9BXZrC1QTcHE",
-
-		// You can add more nodes here, for example, another IPFS node you might have running locally, mine was:
-		// "/ip4/127.0.0.1/tcp/4010/p2p/QmZp2fhDLxjYue2RiUvLwT9MWdnbDxam32qYFnGmxZDh5L",
-	}
-	//To make sure that the swarm is well connected
-
-	go connectToPeers(bootstrapNodes)
 
 	checkSwarmAPI()
 	//checkSwarmHTTP()
@@ -197,6 +173,25 @@ func startIPFS() {
 
 	ipfs, err = spawn(ctx)
 	logError(err, "retrieving swarm")
+
+	bootstrapNodes := []string{
+		// IPFS Bootstrapper nodes.
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+
+		// IPFS Cluster Pinning nodes
+		"/ip4/138.201.67.219/tcp/4001/p2p/QmUd6zHcbkbcs7SMxwLs48qZVX3vpcM8errYS7xEczwRMA",
+		"/ip4/138.201.67.220/tcp/4001/p2p/QmNSYxZAiJHeLdkBg38roksAR9So7Y5eojks1yjEcUtZ7i",
+		"/ip4/138.201.68.74/tcp/4001/p2p/QmdnXwLrC8p1ueiq2Qya8joNvk3TVVDAut7PrikmZwubtR",
+		"/ip4/94.130.135.167/tcp/4001/p2p/QmUEMvxS2e7iDrereVYc5SWPauXPyNwxcy9BXZrC1QTcHE",
+
+	}
+	//To make sure that the swarm is well connected
+
+	go connectToPeers(bootstrapNodes)
+
 }
 
 func checkSwarmAPI (){
@@ -217,9 +212,6 @@ func findClosestPeersAPI(peer string) {
 
 	var connectGroup []string
         for nextPeer := range peers {
-		//peerInfo, err := dht.FindPeer(ctx, nextPeer)
-		//logError(err, "retrieving swarm")
-		//TODO manage concurrency here
                 peersMap[nextPeer.Pretty()] = 1
 		connectGroup = append(connectGroup, nextPeer.Pretty())
         }
@@ -227,6 +219,7 @@ func findClosestPeersAPI(peer string) {
 	go connectToPeers(connectGroup)
 
         fmt.Println("Nodes in the map", len(peersMap))
+        fmt.Println("Down nodes until now ", churn)
         fmt.Println("Churn until now ", churn/len(peersMap))
 }
 
