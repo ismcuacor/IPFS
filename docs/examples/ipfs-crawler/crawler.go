@@ -159,6 +159,8 @@ func main() {
 				findClosestPeersAPI(peer.Value.(string))
 				//findClosestPeersHTTP(peer.Value.(string))
 			}
+			//eliminate the element to not read it in the future
+			peersList.Remove(peer)
 		}
 	//	time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
 		if peersList.Len() == 0 || len(peersMap) > max {
