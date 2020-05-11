@@ -7,14 +7,16 @@ import (
 	//"io"
 	"log"
         "path/filepath"
-
+	"sync"
 	"container/list"
 
 	config "github.com/ipfs/go-ipfs-config"
 	libp2p "github.com/ipfs/go-ipfs/core/node/libp2p"
 	icore "github.com/ipfs/interface-go-ipfs-core"
-
 	core "github.com/ipfs/go-ipfs/core"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	ma "github.com/multiformats/go-multiaddr"
+
 	"github.com/ipfs/go-ipfs/core/coreapi"
 	"github.com/ipfs/go-ipfs/plugin/loader"
 	"github.com/ipfs/go-ipfs/repo/fsrepo"
