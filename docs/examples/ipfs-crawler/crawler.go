@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"crypto/tls"
-	"path/filepath"
-	"strings"
-	"net/http"
-	"encoding/json"
-	"os"
 	//"io"
 	"log"
-	"bufio"
+        "path/filepath"
+
+	"container/list"
 
 	config "github.com/ipfs/go-ipfs-config"
 	libp2p "github.com/ipfs/go-ipfs/core/node/libp2p"
@@ -24,70 +20,44 @@ import (
 	"github.com/ipfs/go-ipfs/repo/fsrepo"
 )
 
-//JSON response for REST query
-type PeersSwarm struct {
-	Peers []struct {
-		Addr      string `json:"Addr"`
-		Peer      string `json:"Peer"`
-		Latency   string `json:"Latency"`
-		Muxer     string `json:"Muxer"`
-		Direction int    `json:"Direction"`
-		Streams   []struct {
-			Protocol string `json:"Protocol"`
-		} `json:"Streams"`
-	} `json:"Peers"`
-}
-
-type Query struct {
-	Extra     string      `json:"Extra"`
-	ID        string      `json:"ID"`
-	Responses interface{} `json:"Responses"`
-	Type      int         `json:"Type"`
-}
-
-var churn = 0
-
 // All peers which have been discovered so far
-var peersAPI map[string]int
-var peersList map[string]int
+var peersList = list.New()
+var peersMap = make(map[string]int)
+
+// To beautify errors and help debbugging & reading
+func logError(err error, str string) {
+	if err != nil {
+		log.Printf("Failed at %s with error %s", str, err)
+	}
+	err = nil
+}
 
 /// ------ Setting up the IPFS Repo
 func setupPlugins(externalPluginsPath string) error {
 	// Load any external plugins if available on externalPluginsPath
 	plugins, err := loader.NewPluginLoader(filepath.Join(externalPluginsPath, "plugins"))
-	if err != nil {
-		return fmt.Errorf("error loading plugins: %s", err)
-	}
+        logError(err, "loading plugins")
 
 	// Load preloaded and external plugins
-	if err := plugins.Initialize(); err != nil {
-		return fmt.Errorf("error initializing plugins: %s", err)
-	}
+	err = plugins.Initialize()
+        logError(err, "initializing plugins")
 
-	if err := plugins.Inject(); err != nil {
-		return fmt.Errorf("error initializing plugins: %s", err)
-	}
+	err = plugins.Inject()
+        logError(err, "injecting plugins")
 
 	return nil
 }
 
 func CreateRepo(ctx context.Context) (string, error) {
 	repoPath, err := ioutil.TempDir("", "ipfs-shell")
-	if err != nil {
-		return "", fmt.Errorf("failed to get temp dir: %s", err)
-	}
+        logError(err, "opening temp dir")
 
-	// Create a config with default options and a 2048 bit key
 	cfg, err := config.Init(ioutil.Discard, 2048)
-	if err != nil {
-		return "", err
-	}
+        logError(err, "creating a config with default options and a 2048 bit key")
 
 	// Create the repo with the config
 	err = fsrepo.Init(repoPath, cfg)
-	if err != nil {
-		return "", fmt.Errorf("failed to init ephemeral node: %s", err)
-	}
+	logError(err, "creating the repo for node")
 
 	return repoPath, nil
 }
@@ -98,21 +68,17 @@ func CreateRepo(ctx context.Context) (string, error) {
 func createNode(ctx context.Context, repoPath string) (icore.CoreAPI, error) {
 	// Open the repo
 	repo, err := fsrepo.Open(repoPath)
-	if err != nil {
-		return nil, err
-	}
+	logError(err, "opening the repo")
 
 	// Construct the node
 	nodeOptions := &core.BuildCfg{
 		Online:  true,
-		Routing: libp2p.DHTClientOption, // This option sets the node to be a client DHT node (only fetching records)
+		Routing: libp2p.DHTOption,
 		Repo: repo,
 	}
 
 	node, err := core.NewNode(ctx, nodeOptions)
-	if err != nil {
-		return nil, err
-	}
+	logError(err, "creating new node")
 
 	// Attach the Core API to the constructed node
 	return coreapi.NewCoreAPI(node)
@@ -126,203 +92,47 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 
 	// Create a Repo
 	repoPath, err := CreateRepo(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp repo: %s", err)
-	}
+	logError(err, "creating temp repo")
 
 	// Spawning an IPFS node
 	return createNode(ctx, repoPath)
 }
 
 func main() {
-	peersAPI = make(map[string]int)
-	peersList = make(map[string]int)
-
-	//fmt.Println("-- Getting an IPFS node running -- ")
-
-	//ctx := context.Background()
-
-	//fmt.Println("Spawning node")
-	//ipfs, err := spawn(ctx)
-	//if err != nil {
-	//	panic(fmt.Errorf("failed to spawn node: %s", err))
-	//}
-
-	//fmt.Println("IPFS node is running")
-
-	fmt.Println("Checking over HTTP")
-	checkSwarmHTTP()
-
-	//fmt.Println("Checking over API")
 	//checkSwarmAPI(ctx, ipfs)
 
-	//for (true) {
-		for peer, state := range peersList {
-			if state < 2 {
-				findClosestPeers(peer)
-				peersList[peer] = 2
+	for (true) {
+		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
+			if _,hit := peersMap[peer.Value.(string)]; !hit {
+				findClosestPeers(peer.Value.(string))
 			}
 		}
-	//	time.Sleep(10 * time.Second)
-	//}
+	//	time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
+	}
 }
 
 func checkSwarmAPI (ctx context.Context, ipfs icore.CoreAPI){
+	fmt.Println("-- Getting an IPFS node running -- ")
+
+	ctx = context.Background()
+
+	fmt.Println("Spawning node")
+	ipfs, err := spawn(ctx)
+	if err != nil {
+		panic(fmt.Errorf("failed to spawn node: %s", err))
+	}
+
+	fmt.Println("IPFS node is running")
+
+	checkSwarmHTTP()
+
 	peersSwarmAPI, err := ipfs.Swarm().Peers(ctx)
-	if err != nil {
-	    fmt.Println(err.Error())
-	}
+	logError(err, "retrieving swarm")
 
-	newPeers := 0
 	for _,peer := range peersSwarmAPI {
-		_, hit := peersAPI[peer.ID().Pretty()]
-		if !hit {
-			newPeers ++
-		}
-		peersAPI[peer.ID().Pretty()] = 1
+		peersList.PushBack(peer.ID().Pretty())
 	}
 
-	fmt.Println("Nodes in the swarm", len(peersAPI))
-	fmt.Println("New peers", newPeers)
+	fmt.Println("Nodes in the swarm", peersList.Len())
 }
 
-func checkSwarmHTTP () {
-	uri := "http://127.0.0.1:5001/api/v0/swarm/peers?verbose=true&streams=true&latency=true&direction=true"
-	requestString := strings.NewReader("")
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	req, err := http.NewRequest("POST", uri, requestString)
-	if err != nil {
-	    fmt.Println(err.Error())
-	}
-
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-	    fmt.Println(err.Error())
-	}
-
-	var peersSwarm PeersSwarm
-	responseBytes, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	err = json.Unmarshal(responseBytes, &peersSwarm)
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	newPeers := 0
-	for _,peer := range peersSwarm.Peers {
-		_, hit := peersList[peer.Peer]
-		if !hit {
-			newPeers ++
-		}
-		peersList[peer.Peer] = 1
-	}
-
-	defer resp.Body.Close()
-
-
-	fmt.Println("Nodes in the swarm", len(peersList))
-	fmt.Println("New peers", newPeers)
-}
-
-func findClosestPeers(peerID string) {
-	uri := "http://127.0.0.1:5001/api/v0/dht/query?arg="+peerID
-	file := "filename.txt"
-
-	requestString := strings.NewReader("")
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	req, err := http.NewRequest("POST", uri, requestString)
-	if err != nil {
-	    fmt.Println(err.Error())
-	}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-	    fmt.Println(err.Error())
-	}
-
-	out, err := os.Create(file)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	defer out.Close()
-	io.Copy(out, resp.Body)
-
-	defer resp.Body.Close()
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	closePeers := make(map[int]Query)
-	parseFileToResponse(file, closePeers)
-
-	err := os.Remove(file)
-
-	if err != nil {
-		log.Fatalf("failed to open file: %s", err)
-	}
-
-	newNodes := 0
-	//When there's Extra, is to say that no address was reachable
-	for _, nextPeer := range closePeers {
-		if nextPeer.Extra != "" && peersList[nextPeer.ID] < 1 {
-			churn++
-		}
-
-		_, hit := peersList[nextPeer.ID]
-		if !hit {
-			newNodes++
-			peersList[nextPeer.ID] = 1
-		}
-	}
-
-	fmt.Println("Nodes in the list", len(peersList))
-	fmt.Println("New Nodes", newNodes)
-	fmt.Println("Churn until now ", churn)
-}
-
-func parseFileToResponse(file string, closePeers map[int]Query) {
-	readFile, err := os.Open(file)
-
-	if err != nil {
-		log.Fatalf("failed to open file: %s", err)
-	}
-
-	fileScanner := bufio.NewScanner(readFile)
-	fileScanner.Split(bufio.ScanLines)
-	var fileTextLines []string
-
-	for fileScanner.Scan() {
-		fileTextLines = append(fileTextLines, fileScanner.Text())
-	}
-
-	readFile.Close()
-
-	i:=0
-	var nextPeer Query
-	for _, eachline := range fileTextLines {
-		err = json.Unmarshal([]byte(eachline), &nextPeer)
-		if err != nil {
-			log.Fatalf("failed to open file: %s", err)
-		}
-		closePeers[i] = nextPeer
-		i++
-	}
-}
