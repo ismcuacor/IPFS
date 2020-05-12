@@ -176,6 +176,7 @@ func startIPFS() {
 	ipfs, err = spawn(ctx)
 	logError(err, "retrieving swarm")
 
+	// Used a connection with bootstrap nodes and without, to see if it changed
 	bootstrapNodes := []string{
 		// IPFS Bootstrapper nodes.
 		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
