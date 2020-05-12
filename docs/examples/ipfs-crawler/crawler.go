@@ -106,9 +106,10 @@ func spawn(ctx context.Context) (icore.CoreAPI, error) {
 	return createNode(ctx, repoPath)
 }
 
-// Func to connect
+// Func to connect, used also to find churn
 func connectToPeers(peers []string) error {
 	peerInfos := make(map[peer.ID]*peerstore.PeerInfo, len(peers))
+	//parse the connections
 	for _, addrStr := range peers {
 		addr, err := ma.NewMultiaddr(addrStr)
 		if err != nil {
@@ -127,6 +128,7 @@ func connectToPeers(peers []string) error {
 	}
 
 	wg.Add(len(peerInfos))
+	//connect to all peers in the list
 	for _, peerInfo := range peerInfos {
 		go func(peerInfo *peerstore.PeerInfo) {
 			defer wg.Done()
@@ -148,10 +150,12 @@ func connectToPeers(peers []string) error {
 func main() {
 	startIPFS()
 
+	//use the swarm to initally fill the peersList
 	checkSwarmAPI()
 	//checkSwarmHTTP()
 
 	for (true) {
+		// Run the list finding neighbors
 		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
 			fmt.Println("checking peer: " + peer.Value.(string))
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
@@ -161,7 +165,9 @@ func main() {
 			//eliminate the element to not read it in the future
 			peersList.Remove(peer)
 		}
-	//	time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
+		// time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
+		
+		// If the list is empty of we stablished a max number of nodes, then leave
 		if peersList.Len() == 0 || len(peersMap) > max {
 			break
 		}
