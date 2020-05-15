@@ -159,9 +159,12 @@ func main() {
 		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
 			fmt.Println("checking peer: " + peer.Value.(string))
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
+				// Add the peer to the list of visited nodes 
 				peersMap[peer.Value.Pretty()] = 1
+				
+				// Check Neighbors
 				findClosestPeersAPI(peer.Value.(string))
-				//findClosestPeersHTTP(peer.Value.(string))
+				// findClosestPeersHTTP(peer.Value.(string))
 			}
 			//eliminate the element to not read it in the future
 			peersList.Remove(peer)
@@ -221,8 +224,14 @@ func findClosestPeersAPI(peer string) {
 
 	var connectGroup []string
         for nextPeer := range peers {
-                peersList.PushBack(peer.ID().Pretty())
-		connectGroup = append(connectGroup, nextPeer.Pretty())
+		// Filter those which have been visited already
+		if _,hit := peersMap[peer.Value.(string)]; !hit {
+			// Add the peer to the list of nodes to visit in the next Iteration
+			peersList.PushBack(peer.ID().Pretty())
+		
+			// Connect to the peer, to see if it is down
+			connectGroup = append(connectGroup, nextPeer.Pretty())
+		}
         }
 
 	go connectToPeers(connectGroup)
