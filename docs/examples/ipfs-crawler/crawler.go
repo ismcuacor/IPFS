@@ -237,6 +237,7 @@ func findClosestPeersAPI(peer string) {
 	go connectToPeers(connectGroup)
 
         fmt.Println("Nodes in the map", len(peersMap))
+	
         fmt.Println("Down nodes until now ", churn)
         fmt.Println("Churn until now ", churn/len(peersMap))
 }
