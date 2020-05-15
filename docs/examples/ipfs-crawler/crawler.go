@@ -159,7 +159,7 @@ func main() {
 		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
 			fmt.Println("checking peer: " + peer.Value.(string))
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
-				peersMap[peer.Pretty()] = 1
+				peersMap[peer.Value.Pretty()] = 1
 				findClosestPeersAPI(peer.Value.(string))
 				//findClosestPeersHTTP(peer.Value.(string))
 			}
