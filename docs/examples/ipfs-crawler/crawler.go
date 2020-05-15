@@ -168,6 +168,11 @@ func main() {
 			}
 			//eliminate the element to not read it in the future
 			peersList.Remove(peer)
+			
+			// If we reached a max number of nodes, then leave
+			if len(peersMap) > max {
+				break
+			}
 		}
 		// time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
 		
