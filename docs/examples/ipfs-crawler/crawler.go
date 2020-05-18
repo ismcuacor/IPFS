@@ -151,8 +151,8 @@ func main() {
 	startIPFS()
 
 	//use the swarm to initally fill the peersList
-	checkSwarmAPI()
-	//checkSwarmHTTP()
+	//checkSwarmAPI()
+	checkSwarmHTTP()
 
 	for (true) {
 		// Run the list finding neighbors
@@ -160,21 +160,21 @@ func main() {
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
 				// Add the peer to the list of visited nodes 
 				peersMap[peer.Value.(string)] = 1
-				
+
 				// Check Neighbors
-				findClosestPeersAPI(peer.Value.(string))
-				// findClosestPeersHTTP(peer.Value.(string))
+				//findClosestPeersAPI(peer.Value.(string))
+				 findClosestPeersHTTP(peer.Value.(string))
 			}
 			//eliminate the element to not read it in the future
 			peersList.Remove(peer)
-			
+
 			// If we reached a max number of nodes, then leave
 			if len(peersMap) > max {
 				break
 			}
 		}
 		// time.Sleep(10 * time.Second) // uncomment if we want to give a break to the system
-		
+
 		// If the list is empty of we stablished a max number of nodes, then leave
 		if peersList.Len() == 0 || len(peersMap) > max {
 			break
@@ -229,7 +229,7 @@ func findClosestPeersAPI(peer string) {
 	var connectGroup []string
         for nextPeer := range peers {
 		// Filter those which have been visited already
-		if _,hit := peersMap[nextPeer]; !hit {
+		if _,hit := peersMap[nextPeer.Pretty()]; !hit {
 			// Add the peer to the list of nodes to visit in the next Iteration
 			peersList.PushBack(nextPeer.Pretty())
 		
