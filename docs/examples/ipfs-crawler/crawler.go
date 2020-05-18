@@ -157,7 +157,6 @@ func main() {
 	for (true) {
 		// Run the list finding neighbors
 		for peer := peersList.Front(); peer != nil; peer = peer.Next() {
-			fmt.Println("checking peer: " + peer.Value.(string))
 			if _,hit := peersMap[peer.Value.(string)]; !hit {
 				// Add the peer to the list of visited nodes 
 				peersMap[peer.Value.(string)] = 1
