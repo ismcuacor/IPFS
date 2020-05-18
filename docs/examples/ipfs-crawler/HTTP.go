@@ -101,15 +101,16 @@ func findClosestPeersHTTP(peerID string) {
 	err = os.Remove(file)
 
 	for _, nextPeer := range closePeers {
-		//When there's Extra, is to say that no address was reachable
-		if _, hit := peersMap[nextPeer.ID]; nextPeer.Extra != "" && !hit  {
+		if _, hit := peersMap[nextPeer.ID]; !hit  {
 			// Add the peer to the list of nodes to visit in the next Iteration
 			peersList.PushBack(nextPeer)
-			
-			churn++
+
+			//When there's Extra, is to say that no address was reachable
+			if nextPeer.Extra != "" {
+				churn++
+			}
 		}
-		
-		peersMap[nextPeer.ID] = 1
+		//peersMap[nextPeer.ID] = 1
 	}
 
 	fmt.Println("Nodes in the map", len(peersMap))
