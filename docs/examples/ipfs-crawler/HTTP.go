@@ -60,7 +60,7 @@ func checkSwarmHTTP () {
 	logError(err, "unmarshalling swarm")
 
 	for _,peer := range peersSwarm.Peers {
-		peersList.PushFront(peer.Peer)
+		peersList.PushBack(peer.Peer)
 	}
 
 	defer resp.Body.Close()
@@ -101,9 +101,9 @@ func findClosestPeersHTTP(peerID string) {
 	err = os.Remove(file)
 
 	for _, nextPeer := range closePeers {
-		if _, hit := peersMap[nextPeer.ID]; !hit  {
+		if _, hit := peersMap[nextPeer.ID.Pretty()]; !hit  {
 			// Add the peer to the list of nodes to visit in the next Iteration
-			peersList.PushBack(nextPeer)
+			peersList.PushBack(nextPeer.ID.Pretty())
 
 			//When there's Extra, is to say that no address was reachable
 			if nextPeer.Extra != "" {
