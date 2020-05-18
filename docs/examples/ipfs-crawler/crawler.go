@@ -151,8 +151,8 @@ func main() {
 	startIPFS()
 
 	//use the swarm to initally fill the peersList
-	//checkSwarmAPI()
-	checkSwarmHTTP()
+	checkSwarmAPI()
+	//checkSwarmHTTP()
 
 	for (true) {
 		// Run the list finding neighbors
@@ -162,8 +162,8 @@ func main() {
 				peersMap[peer.Value.(string)] = 1
 
 				// Check Neighbors
-				//findClosestPeersAPI(peer.Value.(string))
-				 findClosestPeersHTTP(peer.Value.(string))
+				findClosestPeersAPI(peer.Value.(string))
+				//findClosestPeersHTTP(peer.Value.(string))
 			}
 			//eliminate the element to not read it in the future
 			peersList.Remove(peer)

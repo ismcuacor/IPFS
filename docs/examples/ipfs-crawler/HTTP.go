@@ -109,8 +109,10 @@ func findClosestPeersHTTP(peerID string) {
 			if nextPeer.Extra != "" {
 				churn++
 			}
+
+
+			peersMap[nextPeer.ID] = 1
 		}
-		//peersMap[nextPeer.ID] = 1
 	}
 
 	fmt.Println("Nodes in the map", len(peersMap))
