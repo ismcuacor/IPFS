@@ -229,7 +229,7 @@ func findClosestPeersAPI(peer string) {
 	var connectGroup []string
         for nextPeer := range peers {
 		// Filter those which have been visited already
-		if _,hit := peersMap[nextPeer]; !hit {
+		if _,hit := peersMap[nextPeer.Pretty()]; !hit {
 			// Add the peer to the list of nodes to visit in the next Iteration
 			peersList.PushBack(nextPeer.Pretty())
 		
