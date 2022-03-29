@@ -12,7 +12,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.0
 	github.com/go-bindata/go-bindata/v3 v3.1.3
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/ipfs/go-bitswap v0.2.13
@@ -103,9 +103,8 @@ require (
 	github.com/whyrusleeping/tar-utils v0.0.0-20180509141711-8c6c8ba81d5c
 	go.uber.org/fx v1.12.0
 	go.uber.org/zap v1.15.0
-	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 )
 
